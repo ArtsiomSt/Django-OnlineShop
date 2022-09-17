@@ -8,8 +8,9 @@ class buy(models.Model):
     content = models.TextField(null=True, blank=True)
     price = models.FloatField(null=True, blank=True)
     category = models.ForeignKey('Category', on_delete=models.PROTECT, null=True)
+    photo = models.ImageField(upload_to='photo/%Y/%m/%d', blank=True, null=True)
     ordered = models.BooleanField(default=False)
-    ordered_by = models.ManyToManyField(User)
+    ordered_by = models.ManyToManyField(User,  blank=True, null=True)
     remain = models.FloatField(default=0)
 
     def get_absolute_url(self):
@@ -27,14 +28,25 @@ class nomerz(models.Model):
 
 class category(models.Model):
     title = models.CharField(max_length=50, db_index=True, verbose_name='Тип')
+    slug = models.SlugField(max_length= 50, unique=True, verbose_name='URL', null=True, blank=True)
 
     def get_absolute_url(self):
-        return reverse('category', kwargs={"category_id": self.pk})
+        return reverse('category', kwargs={"category_id": self.slug})
 
     class Meta:
         verbose_name = 'Категория'
         verbose_name_plural = 'Категории'
         ordering = ['title']
+
+    @classmethod
+    def get_cat_id_by_slug(cls, slug):
+        allslugs = {
+            'audiotech':'Аудиотехника',
+            'videotech':'Видеотехника',
+            'vishisltech':'Вычислилельная'
+        }
+        title = allslugs[slug]
+        return title
 
     def __str__(self):
         return self.title
@@ -52,3 +64,11 @@ class Transport(models.Model):
 
     def __str__(self):
         return self.title
+
+class UserProfile(models.Model):
+    username = models.CharField(max_length=30)
+    user = models.OneToOneField(User, on_delete=models.PROTECT)
+    auth_token = models.CharField(max_length=50, blank=True, null=True)
+
+    def __str__(self):
+        return self.username
