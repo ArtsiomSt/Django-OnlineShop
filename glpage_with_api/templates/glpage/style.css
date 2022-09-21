@@ -1,0 +1,22 @@
+body {
+    background-color: #605757; 
+    font-family: Arial; 
+}
+
+
+.title{
+    font-size: 45px;
+    color: #482d24;
+}
+
+.card{
+    width: 400px;
+    margin:30px auto;   
+}
+
+.photo{
+  border: 1px solid #ddd;
+  border-radius: 4px;
+  padding: 5px;
+  width: 150px;
+}

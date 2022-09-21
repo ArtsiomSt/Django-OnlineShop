@@ -1,0 +1,25 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>ABOUT</title>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/css/bootstrap.min.css">
+</head>
+<body>
+{% include 'inc/_nav.html' %}
+    <div class="bg-light p-5 rounded">
+          <div class="col-sm-8 py-5 mx-auto">
+            <h1 class="display-5 fw-normal">{{ tovar.title }}</h1>
+            <p class="fs-5">{{ tovar.content }}</p>
+            <p>{{ tovar.category.title }}</p>
+            <p>
+              <a class="btn btn-primary" href="/docs/5.2/components/navbar/#offcanvas" role="button">{{ tovar.price }}</a>
+            </p>
+        </div>
+    </div>
+    <br>
+    <a href="{% url 'order' tovar.pk %}">
+        <button type="submit" class="btn btn-primary btn-block">{{ ordered_or_not }}</button></a>
+    </a>
+</body>
+</html>

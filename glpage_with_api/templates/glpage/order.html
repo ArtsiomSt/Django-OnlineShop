@@ -1,0 +1,45 @@
+{% extends 'base.html' %}
+
+{% block sidebar %}
+<h1>
+    {{ title }}
+</h1>
+{% endblock %}
+
+{% block content %}
+    <div class="album py-5 bg-light">
+    <div class="container">
+      <div class="row row-cols-1 row-cols-sm-2 row-cols-md-4 g-3">
+        {% for buy in buys %}
+            <div class="col">
+              <div class="card shadow-sm">
+                <svg class="bd-placeholder-img card-img-top" width="100%" height="225" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="Placeholder: buy.title" preserveAspectRatio="xMidYMid slice" focusable="false"><title>Placeholder</title><rect width="100%" height="100%" fill="#55595c"></rect><text x="50%" y="50%" fill="#eceeef" dy=".3em">{{ buy.title  }}</text></svg>
+                <div class="card-body">
+                  <p class="card-text">{{ buy.content|truncatewords:30 }}</p>
+                  <div class="d-flex justify-content-between align-items-center">
+                    <div class="btn-group">
+                       <a href="{% url 'category' buy.category.pk %}">{{ buy.category.title }}</a>
+                    </div>
+                       <a href="{{ buy.get_absolute_url }}">{{ buy.price }}</a>
+                  </div>
+                </div>
+              </div>
+            </div>
+          {% empty %}
+            У вас нет товаров в корзине
+          {% endfor %}
+      </div>
+    </div>
+  </div>
+<div>
+    <h2>
+        Общая сумма заказа
+    </h2>
+    <a class="btn btn-primary" role="button">{{ price_order }}</a>
+</div>
+<br>
+<div>
+     <a class="btn btn-primary" href="{% url 'orderingproc' %}" role="button">Нажмите сюда, чтобы перейти к оформлению заказа</a>
+</div>
+{% endblock %}
+

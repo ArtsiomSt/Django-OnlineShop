@@ -1,0 +1,13 @@
+
+<div class="col-md-3">
+             <div class="list-group">
+              <a href="#" class="list-group-item list-group-item-action active" aria-current="true">
+                Список категорий
+              </a>
+              {% for item in category%}
+              <a href="{{ item.get_absolute_url }}" class="list-group-item list-group-item-action">{{ item.title }} <span class="badge bg-primary rounded-pill">{{ cnt }}</span></a>
+
+              {% endfor %}
+              <a href="/" class="list-group-item list-group-item-action">Все товары</a>
+            </div>
+        </div>

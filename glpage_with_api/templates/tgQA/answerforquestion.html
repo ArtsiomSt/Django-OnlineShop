@@ -1,0 +1,24 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>{{ title }}</title>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.2.0/dist/css/bootstrap.min.css">
+</head>
+<body>
+{% include 'inc/_nav.html' %}
+    <div class="bg-light p-5 rounded">
+          <div class="col-sm-8 py-5 mx-auto">
+            <h1 class="display-5 fw-normal">{{ question.tguser }}</h1>
+            <p class="fs-5">{{ question.question }}</p>
+              <form action="" method="post">
+                  {% csrf_token %}
+                  {{ form.as_p}}
+                  <button type="submit" class="btn btn-primary btn-block">Ответить</button>
+              </form>
+        </div>
+    </div>
+    <br>
+        <button type="submit" class="btn btn-primary btn-block">{{ is_ans }}</button></a>
+</body>
+</html>

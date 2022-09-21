@@ -1,0 +1,15 @@
+{% load static %}
+<!doctype html>
+<html>
+  <head>
+    <meta charset="UTF-8">
+    <link type="text/css" href="{% static 'glpage/style.css' %}" rel="stylesheet">
+    <title>{{ number }}</title>
+  </head>
+  <body>
+    <div class="card">
+      <h1 class="title">{{ object.photo.url }}</h1>
+      <img class="photo" src="{% static 'glpage/Screenshot_38.png' %}" alt="No image">
+    </div>
+  </body>
+</html>

@@ -1,0 +1,6 @@
+def index(request):
+    buys = buy.objects.all()
+    categories = category.objects.all()
+    context = {'buys': buys, 'category': categories,}
+    return render(request, 'glpage/indexb.html', context)
+<a href="{% url 'category' buy.category.pk %}">{{ buy.category.title }}</a>
