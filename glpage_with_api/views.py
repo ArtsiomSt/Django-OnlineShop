@@ -1,19 +1,11 @@
-from django.shortcuts import render, redirect
-from django.template import loader
-from django.shortcuts import get_object_or_404
-from django.views.generic import ListView, CreateView, DetailView
-from .forms import buyform, nomer, boolform, Searchform, UserRegistration, User_login_form, OrderModelform
-from .models import buy, nomerz, category, OrderModel
-from django.contrib.auth.mixins import LoginRequiredMixin
-from django.db.models import aggregates, F, Q
-from django.contrib import messages
-from django.contrib.auth import login, logout
-from django.contrib.auth.models import User
-from rest_framework.views import APIView
-from .serializers import CategorySerializer
-from rest_framework.response import Response
-
 def HomePage(request):
+    print(request.__dict__)
+    for item in request.GET.values():
+        print(item)
+    if request.user.is_authenticated:
+        cur_user = UserProfile.objects.get(username=request.user.username)
+        if not cur_user.auth_token:
+            logout(request)
     if request.method == 'POST':
         form = Searchform(request.POST)
         if form.is_valid():
@@ -28,12 +20,13 @@ def HomePage(request):
 
 
 def about(request):
+    print(request.user)
     return render(request, 'glpage/about.html')
 
 
 def create(request):
     if request.method == 'POST':
-        form = buyform(request.POST)
+        form = buyform(request.headers)
         if form.is_valid():
             print(form.cleaned_data)
             created = buy.objects.create(**form.cleaned_data)
@@ -60,6 +53,7 @@ def order(request, tovar_id):
     tovar.save()
     return redirect(tovar)
 
+
 class TovarByCat(ListView):
     model = buy
     template_name = 'glpage/category.html'
@@ -68,16 +62,15 @@ class TovarByCat(ListView):
 
     def get_context_data(self, *, object_list=None, **kwargs):
         context = super().get_context_data(**kwargs)
-        context['title'] = category.objects.get(pk=self.kwargs['category_id'])
+        title = category.get_cat_id_by_slug(self.kwargs['category_id'])
+        current_cat = category.objects.get(title=title)
+        context['title']=category.objects.get(pk=current_cat.pk)
         return context
 
     def get_queryset(self):
-        return buy.objects.filter(category=self.kwargs['category_id'], ordered=False)
-
-    def get_context_data(self, *, object_list=None, **kwargs):
-        context = super().get_context_data(**kwargs)
-        context['title'] = category.objects.get(pk=self.kwargs['category_id'])
-        return context
+        title = category.get_cat_id_by_slug(self.kwargs['category_id'])
+        current_cat = category.objects.get(title=title)
+        return buy.objects.filter(category=current_cat.pk, ordered=False)
 
 
 
@@ -91,15 +84,6 @@ def tovar_page(request,tovar_id):
         ordered_or_not = 'Добавить в корзину'
     context = {'tovar': tovar, 'ordered_or_not': ordered_or_not}
     return render(request, 'glpage/tovar.html', context)
-
-
-class TovarPage(DetailView):
-    model = buy
-    template_name = 'glpage/tovar.html'
-    context_object_name = 'tovar'
-
-    def get_context_data(self, **kwargs):
-        context = super().get_context_data(**kwargs)
 
 
 class Packet(ListView):
@@ -119,6 +103,7 @@ class Packet(ListView):
         context['price_order'] = price_order
         return context
 
+
 def user_Packet(request):
     current_user = request.user
     ordered_things = current_user.buy_set.all()
@@ -132,10 +117,29 @@ def register(request):
     if request.method == 'POST':
         form = UserRegistration(request.POST)
         if form.is_valid():
-            user = form.save()
+            print(form.cleaned_data)
+            form.save()
             messages.success(request, 'Registered')
-            login(request, user)
-            return redirect('home')
+            username = form.data['username']
+            password = form.data['password1']
+            user_login_form = {
+                "username" : username,
+                "password" : password,
+            }
+            url = "http://127.0.0.1:8000/auth/token/login"
+            resp = requests.post(url, data=user_login_form)
+            if 'auth_token' in resp.json():
+                user = authenticate(request, username=username, password=password)
+                login(request, user)
+                print(resp.json()['auth_token'])
+                if UserProfile.objects.filter(username=username):
+                    print(UserProfile.objects.filter(username=username))
+                    curuserprof = UserProfile.objects.get(username=username)
+                    curuserprof.auth_token = resp.json()['auth_token']
+                    curuserprof.save()
+                else:
+                    UserProfile.objects.create(username=username, user=request.user, auth_token=resp.json()['auth_token'])
+                return redirect('home')
         else:
             messages.error(request, 'Not registered')
     else:
@@ -143,22 +147,6 @@ def register(request):
     context = {'form': form, }
     return render(request, 'glpage/register.html', context)
 
-def user_login(request):
-    if request.method == 'POST':
-        form = User_login_form(data=request.POST)
-        if form.is_valid():
-            user = form.get_user()
-            login(request, user)
-            return redirect('home')
-    else:
-        form = User_login_form()
-    context = {'form': form}
-    return render(request, 'glpage/login.html', context)
-
-
-def user_logout(request):
-    logout(request)
-    return redirect('home')
 
 def orderingprocess(request):
     current_user = request.user
@@ -181,6 +169,69 @@ def orderingprocess(request):
     }
     return render(request, 'glpage/ordering.html', context)
 
+
 class catAPI(APIView):
+    permission_classes = (IsAdminUser, )
     def get(self, request):
         return Response({'category':CategorySerializer(category.objects.all(), many=True).data})
+
+
+def loginbyapi(request):
+    message = 'Вход'
+    if request.method == 'POST':
+        form = LoginByAPIForm(request.POST)
+        if form.is_valid():
+            username = form.data['username']
+            password = form.data['password']
+            print(form.cleaned_data['choice'])
+            user_login_form = {
+                "username" : username,
+                "password" : password,
+            }
+            url = "http://127.0.0.1:8000/auth/token/login"
+            resp = requests.post(url, data=user_login_form)
+            if 'auth_token' in resp.json():
+                user = authenticate(request, username=username, password=password)
+                login(request, user)
+                print(resp.json()['auth_token'])
+                if UserProfile.objects.filter(username=username):
+                    print(UserProfile.objects.filter(username=username))
+                    curuserprof = UserProfile.objects.get(username=username)
+                    curuserprof.auth_token = resp.json()['auth_token']
+                    curuserprof.save()
+                else:
+                    UserProfile.objects.create(username=username, user=request.user, auth_token=resp.json()['auth_token'])
+                return redirect('home')
+            else:
+                message = 'You have failed you loging'
+    else:
+        form = LoginByAPIForm()
+    context = {
+        'messaga':message,
+        'form':form
+    }
+    return render(request, 'glpage/loginbyapi.html', context)
+
+
+def logoutbyapi(request):
+    if not request.user.is_authenticated:
+        return redirect('home')
+    url = "http://127.0.0.1:8000/auth/token/logout"
+    currpofile = UserProfile.objects.get(username=request.user.username)
+    header = 'Token '+currpofile.auth_token
+    currpofile.auth_token = ''
+    currpofile.save()
+    headers = {"Authorization": header}
+    resp = requests.post(url, headers=headers)
+    logout(request)
+    return redirect('home')
+
+
+def study(request, number):
+    tov = buy.objects.get(pk=22)
+    context = {
+        'number': number,
+        'object': tov,
+        'title': 'Name'
+    }
+    return render(request, 'glpage/study1.html', context)
